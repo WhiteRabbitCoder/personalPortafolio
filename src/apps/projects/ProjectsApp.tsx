@@ -2,20 +2,13 @@ import { useState } from 'react';
 import { ExternalLink, GitBranch } from 'lucide-react';
 import { projects } from '@/data/projects';
 import { AppIcon } from '@/components/window/AppIcon';
-import { useWindowStore } from '@/stores/windowStore';
 import type { Project } from '@/types';
 
 export function ProjectsApp() {
   const [selected, setSelected] = useState<Project | null>(null);
-  const openWindow = useWindowStore((s) => s.openWindow);
 
-  const handleOpenInBrowser = (project: Project) => {
-    const url = project.homepage || project.url;
-    if (project.homepage) {
-      openWindow('browser', { url: project.homepage, title: project.name });
-    } else {
-      window.open(url, '_blank', 'noopener');
-    }
+  const handleOpen = (project: Project) => {
+    window.open(project.homepage || project.url, '_blank', 'noopener');
   };
 
   return (
@@ -40,7 +33,7 @@ export function ProjectsApp() {
                   : 'hover:bg-white/5'
               }`}
               onClick={() => setSelected(project)}
-              onDoubleClick={() => handleOpenInBrowser(project)}
+              onDoubleClick={() => handleOpen(project)}
             >
               <AppIcon icon={project.icon} size={20} className="shrink-0 text-violet-400" />
               <div className="min-w-0 flex-1">
@@ -97,13 +90,15 @@ export function ProjectsApp() {
                   Source Code
                 </a>
                 {selected.homepage && (
-                  <button
-                    onClick={() => handleOpenInBrowser(selected)}
+                  <a
+                    href={selected.homepage}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center gap-1.5 rounded-lg bg-violet-500/15 px-3 py-1.5 text-xs text-violet-300 transition-colors hover:bg-violet-500/25"
                   >
                     <ExternalLink size={12} />
                     Live Demo
-                  </button>
+                  </a>
                 )}
               </div>
             </div>

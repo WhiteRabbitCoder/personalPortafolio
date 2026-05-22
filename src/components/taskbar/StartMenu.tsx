@@ -10,7 +10,7 @@ const pinnedApps: { id: AppId; label: string; icon: string }[] = [
   { id: 'about', label: 'About Me', icon: 'notepad' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
   { id: 'terminal', label: 'Terminal', icon: 'terminal' },
-  { id: 'browser', label: 'Browser', icon: 'browser' },
+  { id: 'spotify', label: 'Spotify', icon: 'spotify' },
 ];
 
 export function StartMenu() {

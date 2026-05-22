@@ -1,0 +1,6 @@
+# Copy this to .dev.vars for local development with wrangler
+# These are server-side only — never exposed to the frontend
+
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
+SPOTIFY_REFRESH_TOKEN=

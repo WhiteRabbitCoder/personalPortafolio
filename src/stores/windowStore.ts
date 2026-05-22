@@ -19,7 +19,7 @@ const APP_DEFAULTS: Record<AppId, { title: string; icon: string; width: number; 
   about: { title: 'About Me — Notepad', icon: 'notepad', width: 720, height: 520, minWidth: 400, minHeight: 300 },
   projects: { title: 'Projects — Explorer', icon: 'folder', width: 900, height: 600, minWidth: 500, minHeight: 350 },
   terminal: { title: 'Terminal', icon: 'terminal', width: 780, height: 480, minWidth: 400, minHeight: 250 },
-  browser: { title: 'Browser', icon: 'browser', width: 960, height: 640, minWidth: 500, minHeight: 350 },
+  spotify: { title: 'Spotify', icon: 'spotify', width: 900, height: 620, minWidth: 500, minHeight: 400 },
   settings: { title: 'Settings', icon: 'settings', width: 700, height: 500, minWidth: 400, minHeight: 300 },
 };
 

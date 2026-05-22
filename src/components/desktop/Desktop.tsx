@@ -5,7 +5,7 @@ import { DesktopIcon } from './DesktopIcon';
 import { AboutApp } from '@/apps/about/AboutApp';
 import { ProjectsApp } from '@/apps/projects/ProjectsApp';
 import { TerminalApp } from '@/apps/terminal/TerminalApp';
-import { BrowserApp } from '@/apps/browser/BrowserApp';
+import { SpotifyApp } from '@/apps/spotify/SpotifyApp';
 import type { WindowState } from '@/types';
 
 function renderApp(win: WindowState) {
@@ -16,8 +16,8 @@ function renderApp(win: WindowState) {
       return <ProjectsApp />;
     case 'terminal':
       return <TerminalApp />;
-    case 'browser':
-      return <BrowserApp window={win} />;
+    case 'spotify':
+      return <SpotifyApp />;
     default:
       return <div className="flex h-full items-center justify-center text-white/30">App not found</div>;
   }

@@ -10,7 +10,7 @@ const taskbarApps = [
   { appId: 'about' as const, icon: 'notepad' },
   { appId: 'projects' as const, icon: 'folder' },
   { appId: 'terminal' as const, icon: 'terminal' },
-  { appId: 'browser' as const, icon: 'browser' },
+  { appId: 'spotify' as const, icon: 'spotify' },
 ];
 
 export function Taskbar() {

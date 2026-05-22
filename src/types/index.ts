@@ -2,7 +2,7 @@ export type AppId =
   | 'about'
   | 'projects'
   | 'terminal'
-  | 'browser'
+  | 'spotify'
   | 'settings';
 
 export interface WindowState {

@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "wrangler pages dev -- vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name angelo-portfolio --branch main",
+    "spotify:token": "node scripts/get-spotify-token.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
