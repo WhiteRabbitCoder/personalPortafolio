@@ -77,6 +77,8 @@ npm run deploy     # Build + deploy to Cloudflare Pages (production)
 npm run spotify:token  # Helper to get Spotify refresh token
 ```
 
+> `dev:full` passes `--compatibility-date=2026-05-22` to wrangler to match the installed binary version.
+
 ## Path Alias
 
 `@/*` maps to `src/*` — configured in both `tsconfig.app.json` (paths) and `vite.config.ts` (resolve.alias).
@@ -106,13 +108,32 @@ The Spotify app uses a Cloudflare Pages Function (`functions/api/spotify.ts`) as
 5. For local dev, put them in `.dev.vars` and use `npm run dev:full`
 
 **API endpoints** (all via the single function at `/api/spotify?type=`):
-- `now-playing` — currently playing track (30s cache)
+- `now-playing` — currently playing track (**5s cache** — kept short for real-time feel)
 - `profile` — user profile (1h cache)
 - `top-tracks` — top 10 tracks short term (5m cache)
 - `top-artists` — top 6 artists short term (5m cache)
 - `recently-played` — last 10 played tracks (1m cache)
 
 If credentials aren't set, the app shows a placeholder with setup instructions.
+
+**Spotify app UI design:**
+- Layout: `p-2 gap-2` outer padding → two inner `rounded-lg` panels (scrollable content + now-playing bar)
+- Near-black background `#0a0a0a` → dark panels `#121212` / `#181818` (mirrors Spotify desktop)
+- Now-playing bar: 3-column grid `grid-cols-[1fr_2fr_1fr]` — track info | controls + progress | volume
+- Real-time progress: `useRealtimeProgress` hook syncs from API (every 5s) and increments locally every 1s
+- App icon: official Spotify SVG logo (inline in `AppIcon.tsx`, not from Lucide)
+- Profile header: 144px avatar, gradient `#1a3a2a → #121212`, 4xl bold name
+
+## Skills
+
+Project-specific agent skills live in `.agents/skills/`. Claude Code loads these automatically even when not in `.claude/skills/`. Use them proactively for design and frontend work:
+
+| Skill | When to use |
+|---|---|
+| `frontend-design` | Building new UI components or pages — produces high-quality, production-grade code |
+| `ui-ux-pro-max` | Design reviews, color palette decisions, layout improvements, accessibility |
+| `vercel-composition-patterns` | Refactoring React components, compound components, composition API design |
+| `web-design-guidelines` | Auditing UI against best practices, accessibility checks |
 
 ## Roadmap
 

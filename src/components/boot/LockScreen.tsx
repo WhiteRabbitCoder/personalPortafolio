@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSystemStore } from '@/stores/systemStore';
+import rabbitIcon from '@/assets/kindpng_582715.png';
 
 export function LockScreen() {
   const bootPhase = useSystemStore((s) => s.bootPhase);
@@ -38,6 +39,7 @@ export function LockScreen() {
     minute: '2-digit',
     hour12: false,
   });
+  
   const dateStr = currentTime.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -49,42 +51,91 @@ export function LockScreen() {
       {bootPhase === 'lock' && (
         <motion.div
           key="lock"
-          className="fixed inset-0 z-[9998] flex flex-col items-center justify-center"
+          className="fixed inset-0 z-[9998] flex flex-col items-center justify-center overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, y: -40 }}
-          transition={{ duration: 0.5 }}
+          exit={{ opacity: 0, scale: 1.05, filter: 'blur(20px)' }}
+          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
           style={{
-            background:
-              'radial-gradient(ellipse at 50% 40%, rgba(88, 28, 135, 0.4), rgba(10, 6, 18, 0.98) 70%)',
+            background: 'radial-gradient(circle at center, #1a0b2e 0%, #0a0612 100%)',
           }}
         >
+          {/* Animated Background Orbs */}
+          <div className="absolute inset-0 pointer-events-none">
+            <motion.div 
+              className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-600/20 rounded-full blur-[120px]"
+              animate={{ 
+                x: [0, 50, 0],
+                y: [0, 30, 0],
+              }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div 
+              className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-600/10 rounded-full blur-[120px]"
+              animate={{ 
+                x: [0, -50, 0],
+                y: [0, -30, 0],
+              }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+
           <motion.div
-            className="flex flex-col items-center gap-2"
+            className="relative z-10 flex flex-col items-center gap-8"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
           >
-            <h1 className="text-7xl font-light tracking-tight text-white sm:text-8xl">
-              {hours}
-            </h1>
-            <p className="text-lg font-light text-white/70">{dateStr}</p>
+            <div className="flex flex-col items-center gap-2">
+              <motion.h1 
+                className="text-8xl font-thin tracking-tighter text-white sm:text-9xl md:text-[11rem] leading-none"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+              >
+                {hours}
+              </motion.h1>
+              <motion.p 
+                className="text-xl font-light tracking-[0.4em] text-white/40 uppercase"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 1 }}
+              >
+                {dateStr}
+              </motion.p>
+            </div>
           </motion.div>
 
           <motion.div
-            className="mt-16 flex flex-col items-center gap-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
+            className="relative z-10 mt-48 flex flex-col items-center gap-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
           >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 ring-2 ring-white/20">
-              <span className="text-lg font-semibold text-white">AG</span>
+            <div className="group relative">
+              <motion.div 
+                className="absolute -inset-2 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-indigo-600 opacity-20 blur-md group-hover:opacity-40 transition duration-1000"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              />
+              <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/5 backdrop-blur-xl transition-all duration-500 group-hover:scale-105 group-hover:border-white/40">
+                <img 
+                  src={rabbitIcon} 
+                  alt="Profile" 
+                  className="h-full w-full object-cover p-3 opacity-90 group-hover:opacity-100"
+                />
+              </div>
             </div>
-            <p className="text-sm font-medium text-white/90">Angelo Gaviria</p>
+            
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-xl font-medium tracking-tight text-white/90">Angelo Gaviria</p>
+              <div className="h-[2px] w-12 rounded-full bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+            </div>
+
             <motion.p
-              className="mt-2 text-xs text-white/40"
-              animate={{ opacity: [0.4, 0.8, 0.4] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              className="mt-12 text-xs font-light tracking-[0.3em] text-white/30 uppercase"
+              animate={{ opacity: [0.2, 0.5, 0.2] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
               Click or press any key to unlock
             </motion.p>

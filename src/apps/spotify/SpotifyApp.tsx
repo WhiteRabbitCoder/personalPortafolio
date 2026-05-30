@@ -1,5 +1,18 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Music, Play, Pause, ExternalLink, Clock, Disc3 } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import {
+  Music,
+  Play,
+  Pause,
+  ExternalLink,
+  Clock,
+  Disc3,
+  History,
+  SkipBack,
+  SkipForward,
+  Shuffle,
+  Repeat,
+  Volume2,
+} from 'lucide-react';
 
 interface SpotifyImage {
   url: string;
@@ -31,21 +44,12 @@ interface NowPlaying {
   progress_ms?: number;
 }
 
-interface TopTracks {
-  items: SpotifyTrack[];
-}
-
-interface TopArtists {
+interface RecentlyPlayed {
   items: {
-    id: string;
-    name: string;
-    images: SpotifyImage[];
-    genres: string[];
-    external_urls: { spotify: string };
+    track: SpotifyTrack;
+    played_at: string;
   }[];
 }
-
-type Tab = 'tracks' | 'artists';
 
 const API_BASE = '/api/spotify';
 
@@ -65,18 +69,79 @@ function formatMs(ms: number) {
   return `${min}:${sec.toString().padStart(2, '0')}`;
 }
 
-function TrackRow({ track, index }: { track: SpotifyTrack; index: number }) {
+function formatTimeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function useRealtimeProgress(nowPlaying: NowPlaying | null) {
+  const [progress, setProgress] = useState(0);
+  const lastSyncRef = useRef<{ progress: number; time: number; trackId: string } | null>(null);
+
+  useEffect(() => {
+    if (!nowPlaying?.item) {
+      setProgress(0);
+      lastSyncRef.current = null;
+      return;
+    }
+
+    const serverProgress = nowPlaying.progress_ms ?? 0;
+    const trackId = nowPlaying.item.id;
+
+    lastSyncRef.current = {
+      progress: serverProgress,
+      time: Date.now(),
+      trackId,
+    };
+    setProgress(serverProgress);
+  }, [nowPlaying]);
+
+  useEffect(() => {
+    if (!nowPlaying?.item || !nowPlaying.is_playing) return;
+
+    const duration = nowPlaying.item.duration_ms;
+    const interval = setInterval(() => {
+      const sync = lastSyncRef.current;
+      if (!sync) return;
+      const elapsed = Date.now() - sync.time;
+      const current = Math.min(sync.progress + elapsed, duration);
+      setProgress(current);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [nowPlaying]);
+
+  return progress;
+}
+
+function TrackRow({
+  track,
+  index,
+  playedAt,
+}: {
+  track: SpotifyTrack;
+  index: number;
+  playedAt?: string;
+}) {
   return (
     <a
       href={track.external_urls.spotify}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-white/10"
+      className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.06]"
     >
-      <span className="w-5 text-right text-sm text-[#b3b3b3] group-hover:hidden">
+      <span className="w-5 text-right text-sm tabular-nums text-[#b3b3b3] group-hover:hidden">
         {index + 1}
       </span>
-      <Play size={14} className="hidden w-5 text-white group-hover:block" />
+      <Play
+        size={14}
+        className="hidden w-5 text-white group-hover:block"
+      />
       {track.album.images[2] ? (
         <img
           src={track.album.images[2].url}
@@ -95,97 +160,103 @@ function TrackRow({ track, index }: { track: SpotifyTrack; index: number }) {
           {track.artists.map((a) => a.name).join(', ')}
         </p>
       </div>
-      <span className="hidden text-xs text-[#b3b3b3] sm:block">
+      <span className="hidden truncate text-xs text-[#b3b3b3] sm:block">
         {track.album.name}
       </span>
-      <span className="ml-4 text-xs text-[#b3b3b3]">
-        {formatMs(track.duration_ms)}
+      <span className="ml-4 shrink-0 text-xs tabular-nums text-[#b3b3b3]">
+        {playedAt ? formatTimeAgo(playedAt) : formatMs(track.duration_ms)}
       </span>
     </a>
   );
 }
 
-function ArtistCard({ artist }: { artist: TopArtists['items'][number] }) {
-  return (
-    <a
-      href={artist.external_urls.spotify}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex flex-col items-center gap-3 rounded-xl bg-[#181818] p-4 transition-colors hover:bg-[#282828]"
-    >
-      {artist.images[1] ? (
-        <img
-          src={artist.images[1].url}
-          alt=""
-          className="h-24 w-24 rounded-full object-cover shadow-lg shadow-black/40"
-          loading="lazy"
-        />
-      ) : (
-        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#282828]">
-          <Music size={32} className="text-[#b3b3b3]" />
-        </div>
-      )}
-      <div className="w-full text-center">
-        <p className="truncate text-sm font-semibold text-white">{artist.name}</p>
-        <p className="truncate text-[11px] text-[#b3b3b3]">
-          {artist.genres.slice(0, 2).join(', ') || 'Artist'}
-        </p>
-      </div>
-    </a>
-  );
-}
-
-function NowPlayingBar({ data }: { data: NowPlaying | null }) {
+function NowPlayingBar({
+  data,
+  progress,
+}: {
+  data: NowPlaying | null;
+  progress: number;
+}) {
   if (!data?.item) {
     return (
-      <div className="flex h-[72px] items-center justify-center border-t border-[#282828] bg-[#181818] px-4">
+      <div className="flex h-[90px] items-center justify-center rounded-lg bg-[#181818] px-4">
         <p className="text-xs text-[#b3b3b3]">Nothing playing right now</p>
       </div>
     );
   }
 
   const track = data.item;
-  const progress = data.progress_ms ?? 0;
   const pct = (progress / track.duration_ms) * 100;
 
   return (
-    <div className="flex h-[72px] items-center gap-3 border-t border-[#282828] bg-[#181818] px-4">
-      {track.album.images[2] ? (
-        <img src={track.album.images[2].url} alt="" className="h-14 w-14 rounded" />
-      ) : (
-        <div className="flex h-14 w-14 items-center justify-center rounded bg-[#282828]">
-          <Music size={20} className="text-[#b3b3b3]" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <a
-          href={track.external_urls.spotify}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block truncate text-sm text-white hover:underline"
-        >
-          {track.name}
-        </a>
-        <p className="truncate text-xs text-[#b3b3b3]">
-          {track.artists.map((a) => a.name).join(', ')}
-        </p>
-        <div className="mt-1.5 flex items-center gap-2">
-          <span className="text-[10px] text-[#b3b3b3]">{formatMs(progress)}</span>
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#4d4d4d]">
-            <div
-              className="h-full rounded-full bg-[#1DB954] transition-all duration-1000"
-              style={{ width: `${pct}%` }}
+    <div className="rounded-lg bg-[#181818] px-4 py-2">
+      <div className="grid h-full grid-cols-[1fr_2fr_1fr] items-center gap-4">
+        {/* Left — track info */}
+        <div className="flex min-w-0 items-center gap-3">
+          {track.album.images[2] ? (
+            <img
+              src={track.album.images[2].url}
+              alt=""
+              className="h-14 w-14 shrink-0 rounded shadow-md shadow-black/30"
             />
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded bg-[#282828]">
+              <Music size={20} className="text-[#b3b3b3]" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <a
+              href={track.external_urls.spotify}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block truncate text-sm font-medium text-white hover:underline"
+            >
+              {track.name}
+            </a>
+            <p className="truncate text-[11px] text-[#b3b3b3]">
+              {track.artists.map((a) => a.name).join(', ')}
+            </p>
           </div>
-          <span className="text-[10px] text-[#b3b3b3]">{formatMs(track.duration_ms)}</span>
         </div>
-      </div>
-      <div className="flex items-center gap-2">
-        {data.is_playing ? (
-          <Pause size={18} className="text-white" />
-        ) : (
-          <Play size={18} className="text-[#b3b3b3]" />
-        )}
+
+        {/* Center — controls + progress */}
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center gap-5">
+            <Shuffle size={14} className="text-[#b3b3b3] transition-colors hover:text-white" />
+            <SkipBack size={16} className="fill-current text-[#b3b3b3] transition-colors hover:text-white" />
+            <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white transition-transform hover:scale-105">
+              {data.is_playing ? (
+                <Pause size={16} className="text-black" />
+              ) : (
+                <Play size={16} className="ml-0.5 text-black" />
+              )}
+            </button>
+            <SkipForward size={16} className="fill-current text-[#b3b3b3] transition-colors hover:text-white" />
+            <Repeat size={14} className="text-[#b3b3b3] transition-colors hover:text-white" />
+          </div>
+          <div className="flex w-full items-center gap-2">
+            <span className="w-10 text-right text-[11px] tabular-nums text-[#b3b3b3]">
+              {formatMs(progress)}
+            </span>
+            <div className="group relative h-1 flex-1 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-white transition-all duration-1000 group-hover:bg-[#1DB954]"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="w-10 text-[11px] tabular-nums text-[#b3b3b3]">
+              {formatMs(track.duration_ms)}
+            </span>
+          </div>
+        </div>
+
+        {/* Right — volume */}
+        <div className="flex items-center justify-center gap-2">
+          <Volume2 size={16} className="text-[#b3b3b3]" />
+          <div className="group relative h-1 w-24 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-2/3 rounded-full bg-white group-hover:bg-[#1DB954]" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -193,14 +264,16 @@ function NowPlayingBar({ data }: { data: NowPlaying | null }) {
 
 function Placeholder() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 bg-[#121212] p-8">
+    <div className="flex h-full flex-col items-center justify-center gap-4 rounded-lg bg-[#121212] p-8">
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1DB954]/20">
         <Music size={36} className="text-[#1DB954]" />
       </div>
-      <h2 className="text-xl font-bold text-white">Spotify not connected</h2>
+      <h2 className="text-xl font-bold text-white">
+        Spotify not connected
+      </h2>
       <p className="max-w-sm text-center text-sm text-[#b3b3b3]">
-        Set your Spotify API credentials in the environment to display your profile and
-        currently playing music.
+        Set your Spotify API credentials in the environment to display your
+        profile and currently playing music.
       </p>
       <div className="mt-2 w-full max-w-md rounded-lg bg-[#181818] p-4 font-mono text-xs text-[#b3b3b3]">
         <p className="mb-1 text-[#1DB954]"># Cloudflare Pages env vars</p>
@@ -215,14 +288,16 @@ function Placeholder() {
 export function SpotifyApp() {
   const [profile, setProfile] = useState<SpotifyProfile | null>(null);
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
-  const [topTracks, setTopTracks] = useState<TopTracks | null>(null);
-  const [topArtists, setTopArtists] = useState<TopArtists | null>(null);
+  const [recentlyPlayed, setRecentlyPlayed] =
+    useState<RecentlyPlayed | null>(null);
   const [notConfigured, setNotConfigured] = useState(false);
-  const [tab, setTab] = useState<Tab>('tracks');
   const [loading, setLoading] = useState(true);
 
+  const progress = useRealtimeProgress(nowPlaying);
+
   const fetchAll = useCallback(async () => {
-    const profileData = await fetchSpotify<SpotifyProfile>('profile');
+    const profileData =
+      await fetchSpotify<SpotifyProfile>('profile');
     if (!profileData) {
       setNotConfigured(true);
       setLoading(false);
@@ -230,14 +305,12 @@ export function SpotifyApp() {
     }
     setProfile(profileData);
 
-    const [np, tracks, artists] = await Promise.all([
+    const [np, recent] = await Promise.all([
       fetchSpotify<NowPlaying>('now-playing'),
-      fetchSpotify<TopTracks>('top-tracks'),
-      fetchSpotify<TopArtists>('top-artists'),
+      fetchSpotify<RecentlyPlayed>('recently-played'),
     ]);
     setNowPlaying(np);
-    setTopTracks(tracks);
-    setTopArtists(artists);
+    setRecentlyPlayed(recent);
     setLoading(false);
   }, []);
 
@@ -246,136 +319,128 @@ export function SpotifyApp() {
   }, [fetchAll]);
 
   useEffect(() => {
-    const interval = setInterval(async () => {
+    const pollNowPlaying = setInterval(async () => {
       const np = await fetchSpotify<NowPlaying>('now-playing');
       if (np) setNowPlaying(np);
+    }, 5000);
+
+    const pollRecent = setInterval(async () => {
+      const recent = await fetchSpotify<RecentlyPlayed>('recently-played');
+      if (recent) setRecentlyPlayed(recent);
     }, 30000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(pollNowPlaying);
+      clearInterval(pollRecent);
+    };
   }, []);
 
-  if (notConfigured) return <Placeholder />;
+  if (notConfigured) {
+    return (
+      <div className="h-full bg-[#0a0a0a] p-2">
+        <Placeholder />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#121212]">
+      <div className="flex h-full items-center justify-center bg-[#0a0a0a]">
         <Disc3 size={32} className="animate-spin text-[#1DB954]" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#121212]">
-      <div className="min-h-0 flex-1 overflow-auto">
+    <div className="flex h-full flex-col gap-2 bg-[#0a0a0a] p-2">
+      {/* Scrollable content panel */}
+      <div className="min-h-0 flex-1 overflow-auto rounded-lg bg-[#121212]">
         {/* Profile header */}
         {profile && (
           <div
-            className="flex items-end gap-5 p-6 pb-5"
+            className="px-8 pb-8 pt-10"
             style={{
               background:
-                'linear-gradient(to bottom, #1a3a2a 0%, #121212 100%)',
+                'linear-gradient(180deg, #1a3a2a 0%, #121212 100%)',
             }}
           >
-            {profile.images[0] ? (
-              <img
-                src={profile.images[0].url}
-                alt=""
-                className="h-28 w-28 rounded-full object-cover shadow-xl shadow-black/50"
-              />
-            ) : (
-              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#282828] shadow-xl shadow-black/50">
-                <Music size={40} className="text-[#b3b3b3]" />
-              </div>
-            )}
-            <div className="min-w-0 pb-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-white/60">
-                Profile
-              </p>
-              <h1 className="truncate text-3xl font-black text-white">
-                {profile.display_name}
-              </h1>
-              <div className="mt-1 flex items-center gap-3">
-                <span className="text-sm text-[#b3b3b3]">
-                  {profile.followers.total.toLocaleString()} followers
-                </span>
-                <a
-                  href={profile.external_urls.spotify}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-[#1DB954] hover:underline"
-                >
-                  Open in Spotify <ExternalLink size={10} />
-                </a>
+            <div className="flex items-center gap-6">
+              {profile.images[0] ? (
+                <img
+                  src={profile.images[0].url}
+                  alt=""
+                  className="h-36 w-36 shrink-0 rounded-full object-cover shadow-2xl shadow-black/60"
+                />
+              ) : (
+                <div className="flex h-36 w-36 shrink-0 items-center justify-center rounded-full bg-[#282828] shadow-2xl shadow-black/60">
+                  <Music size={48} className="text-[#b3b3b3]" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-widest text-white/50">
+                  Profile
+                </p>
+                <h1 className="mt-1 truncate text-4xl font-black tracking-tight text-white">
+                  {profile.display_name}
+                </h1>
+                <div className="mt-3 flex items-center gap-4">
+                  <span className="text-sm text-[#b3b3b3]">
+                    {profile.followers.total.toLocaleString()} followers
+                  </span>
+                  <span className="text-[#b3b3b3]">&middot;</span>
+                  <a
+                    href={profile.external_urls.spotify}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm text-[#1DB954] transition-colors hover:text-[#1ed760]"
+                  >
+                    Open in Spotify <ExternalLink size={12} />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex gap-2 px-6 pb-2 pt-2">
-          <button
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-              tab === 'tracks'
-                ? 'bg-white text-black'
-                : 'bg-[#232323] text-white hover:bg-[#2a2a2a]'
-            }`}
-            onClick={() => setTab('tracks')}
-          >
-            Top Tracks
-          </button>
-          <button
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-              tab === 'artists'
-                ? 'bg-white text-black'
-                : 'bg-[#232323] text-white hover:bg-[#2a2a2a]'
-            }`}
-            onClick={() => setTab('artists')}
-          >
-            Top Artists
-          </button>
-        </div>
+        {/* Recently Played section */}
+        <div className="px-8 pb-8">
+          <div className="flex items-center gap-2.5 pb-4 pt-2">
+            <History size={18} className="text-[#b3b3b3]" />
+            <h2 className="text-lg font-bold text-white">
+              Recently Played
+            </h2>
+          </div>
 
-        {/* Content */}
-        <div className="px-4 pb-4">
-          {tab === 'tracks' && (
-            <div>
-              {/* Column header */}
-              <div className="mb-1 flex items-center gap-3 border-b border-[#282828] px-3 py-2 text-[11px] uppercase tracking-wider text-[#b3b3b3]">
-                <span className="w-5 text-right">#</span>
-                <span className="w-10" />
-                <span className="flex-1">Title</span>
-                <span className="hidden sm:block">Album</span>
-                <span className="ml-4 flex items-center">
-                  <Clock size={12} />
-                </span>
-              </div>
-              {topTracks?.items.map((track, i) => (
-                <TrackRow key={track.id} track={track} index={i} />
-              ))}
-              {!topTracks?.items.length && (
-                <p className="py-8 text-center text-sm text-[#b3b3b3]">
-                  No top tracks available yet
-                </p>
-              )}
-            </div>
-          )}
+          <div className="mb-1 flex items-center gap-3 border-b border-white/[0.06] px-3 py-2 text-[11px] uppercase tracking-wider text-[#b3b3b3]">
+            <span className="w-5 text-right">#</span>
+            <span className="w-10" />
+            <span className="flex-1">Title</span>
+            <span className="hidden sm:block">Album</span>
+            <span className="ml-4 flex items-center">
+              <Clock size={12} />
+            </span>
+          </div>
 
-          {tab === 'artists' && (
-            <div className="grid grid-cols-2 gap-3 pt-2 sm:grid-cols-3">
-              {topArtists?.items.map((artist) => (
-                <ArtistCard key={artist.id} artist={artist} />
-              ))}
-              {!topArtists?.items.length && (
-                <p className="col-span-full py-8 text-center text-sm text-[#b3b3b3]">
-                  No top artists available yet
-                </p>
-              )}
-            </div>
+          <div className="space-y-0.5">
+            {recentlyPlayed?.items.map((item, i) => (
+              <TrackRow
+                key={`${item.track.id}-${item.played_at}`}
+                track={item.track}
+                index={i}
+                playedAt={item.played_at}
+              />
+            ))}
+          </div>
+          {!recentlyPlayed?.items.length && (
+            <p className="py-12 text-center text-sm text-[#b3b3b3]">
+              No recently played tracks
+            </p>
           )}
         </div>
       </div>
 
-      {/* Now Playing bar */}
-      <NowPlayingBar data={nowPlaying} />
+      {/* Now Playing bar panel */}
+      <NowPlayingBar data={nowPlaying} progress={progress} />
     </div>
   );
 }

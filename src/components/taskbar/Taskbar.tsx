@@ -5,6 +5,7 @@ import { useWindowStore } from '@/stores/windowStore';
 import { useSystemStore } from '@/stores/systemStore';
 import { AppIcon } from '@/components/window/AppIcon';
 import { StartMenu } from './StartMenu';
+import rabbitIcon from '@/assets/kindpng_582715.png';
 
 const taskbarApps = [
   { appId: 'about' as const, icon: 'notepad' },
@@ -65,14 +66,14 @@ export function Taskbar() {
           {/* Start button */}
           <button
             data-start-button
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-white/10"
+            className="group flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 hover:bg-white/10 active:scale-90"
             onClick={(e) => {
               e.stopPropagation();
               toggleStartMenu();
             }}
           >
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-gradient-to-br from-violet-500 to-indigo-600">
-              <span className="text-[8px] font-bold text-white">AG</span>
+            <div className="flex h-5 w-5 items-center justify-center overflow-hidden rounded bg-white/5 border border-white/10 transition-transform group-hover:scale-110">
+              <img src={rabbitIcon} alt="Start" className="h-full w-full object-contain p-0.5" />
             </div>
           </button>
 

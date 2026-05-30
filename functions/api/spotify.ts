@@ -72,7 +72,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     switch (type) {
       case 'now-playing':
         data = await spotifyFetch('/me/player/currently-playing', token);
-        cacheSeconds = 30;
+        cacheSeconds = 5;
         break;
       case 'profile':
         data = await spotifyFetch('/me', token);

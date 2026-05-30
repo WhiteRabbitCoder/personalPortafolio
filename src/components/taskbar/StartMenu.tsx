@@ -5,6 +5,7 @@ import { useDesktopStore } from '@/stores/desktopStore';
 import { useWindowStore } from '@/stores/windowStore';
 import { AppIcon } from '@/components/window/AppIcon';
 import type { AppId } from '@/types';
+import rabbitIcon from '@/assets/kindpng_582715.png';
 
 const pinnedApps: { id: AppId; label: string; icon: string }[] = [
   { id: 'about', label: 'About Me', icon: 'notepad' },
@@ -106,8 +107,8 @@ export function StartMenu() {
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-white/5 px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-500/20">
-                <span className="text-[10px] font-semibold text-violet-300">AG</span>
+              <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-violet-500/10 border border-white/10">
+                <img src={rabbitIcon} alt="Profile" className="h-full w-full object-cover p-1" />
               </div>
               <span className="text-xs text-white/60">Angelo Gaviria</span>
             </div>
