@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSystemStore } from '@/stores/systemStore';
+import rabbitIcon from '@/assets/kindpng_582715.png';
 
 export function BootScreen() {
   const bootPhase = useSystemStore((s) => s.bootPhase);
@@ -18,27 +19,31 @@ export function BootScreen() {
       {bootPhase === 'loading' && (
         <motion.div
           key="boot"
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0a0612]"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0612]"
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
         >
+          {/* Icon — anchored at 38% from top */}
           <motion.div
+            className="absolute top-[38%] -translate-y-1/2"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="mb-10"
           >
-            <div className="relative flex h-16 w-16 items-center justify-center">
-              <div className="absolute h-16 w-16 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 opacity-80" />
-              <span className="relative text-2xl font-bold text-white">AG</span>
+            <div className="relative flex h-20 w-20 items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 opacity-30 blur-md" />
+              <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/5">
+                <img src={rabbitIcon} alt="AG" className="h-full w-full object-cover p-2 opacity-90" />
+              </div>
             </div>
           </motion.div>
 
+          {/* Loading bar — anchored at 68% from top */}
           <motion.div
+            className="absolute top-[68%] -translate-y-1/2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex flex-col items-center gap-4"
           >
             <div className="h-0.5 w-48 overflow-hidden rounded-full bg-white/10">
               <motion.div

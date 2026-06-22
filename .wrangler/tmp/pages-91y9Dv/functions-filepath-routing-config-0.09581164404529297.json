@@ -1,0 +1,21 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/spotify",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/spotify.ts:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/spotify",
+      "mountPath": "/api",
+      "method": "OPTIONS",
+      "module": [
+        "api/spotify.ts:onRequestOptions"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

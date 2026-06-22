@@ -51,7 +51,7 @@ export function LockScreen() {
       {bootPhase === 'lock' && (
         <motion.div
           key="lock"
-          className="fixed inset-0 z-[9998] flex flex-col items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9998] flex flex-col items-center overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.05, filter: 'blur(20px)' }}
@@ -80,60 +80,60 @@ export function LockScreen() {
             />
           </div>
 
+          {/* Clock — anchored at 35% from top */}
           <motion.div
-            className="relative z-10 flex flex-col items-center gap-8"
+            className="absolute top-[35%] z-10 flex -translate-y-1/2 flex-col items-center gap-2"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
           >
-            <div className="flex flex-col items-center gap-2">
-              <motion.h1 
-                className="text-8xl font-thin tracking-tighter text-white sm:text-9xl md:text-[11rem] leading-none"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-              >
-                {hours}
-              </motion.h1>
-              <motion.p 
-                className="text-xl font-light tracking-[0.4em] text-white/40 uppercase"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 1 }}
-              >
-                {dateStr}
-              </motion.p>
-            </div>
+            <motion.h1
+              className="text-8xl font-thin tracking-tighter text-white sm:text-9xl md:text-[11rem] leading-none"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+            >
+              {hours}
+            </motion.h1>
+            <motion.p
+              className="text-xl font-light tracking-[0.4em] text-white/40 uppercase"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 1 }}
+            >
+              {dateStr}
+            </motion.p>
           </motion.div>
 
+          {/* Profile — anchored at 70% from top */}
           <motion.div
-            className="relative z-10 mt-48 flex flex-col items-center gap-8"
+            className="absolute top-[70%] z-10 flex -translate-y-1/2 flex-col items-center gap-8"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
           >
             <div className="group relative">
-              <motion.div 
+              <motion.div
                 className="absolute -inset-2 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-indigo-600 opacity-20 blur-md group-hover:opacity-40 transition duration-1000"
                 animate={{ rotate: [0, 360] }}
                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
               />
               <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/5 backdrop-blur-xl transition-all duration-500 group-hover:scale-105 group-hover:border-white/40">
-                <img 
-                  src={rabbitIcon} 
-                  alt="Profile" 
+                <img
+                  src={rabbitIcon}
+                  alt="Profile"
                   className="h-full w-full object-cover p-3 opacity-90 group-hover:opacity-100"
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-col items-center gap-3">
               <p className="text-xl font-medium tracking-tight text-white/90">Angelo Gaviria</p>
               <div className="h-[2px] w-12 rounded-full bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
             </div>
 
             <motion.p
-              className="mt-12 text-xs font-light tracking-[0.3em] text-white/30 uppercase"
+              className="text-xs font-light tracking-[0.3em] text-white/30 uppercase"
               animate={{ opacity: [0.2, 0.5, 0.2] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
